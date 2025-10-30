@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Forecast Tool</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React and ReactDOM CDNs -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div id="root" class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const StockForm = () => {
+      const [stockCode, setStockCode] = useState('');
+      const [term, setTerm] = useState('short');
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setResult(null);
+
+        try {
+          const response = await fetch(`http://localhost:5000/api/forecast?stock=${stockCode}&term=${term}`, {
+            method: 'GET',
+          });
+          if (!response.ok) throw new Error('Failed to fetch forecast: ' + response.statusText);
+          const data = await response.json();
+          setResult(data);
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      return (
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-center">Stock Forecast Tool</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="stockCode" className="block text-sm font-medium text-gray-700">
+                Stock Code
+              </label>
+              <input
+                type="text"
+                id="stockCode"
+                value={stockCode}
+                onChange={(e) => setStockCode(e.target.value)}
+                placeholder="e.g., AAPL"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="term" className="block text-sm font-medium text-gray-700">
+                Term
+              </label>
+              <select
+                id="term"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              >
+                <option value="short">Short-Term (5 days)</option>
+                <option value="long">Long-Term (20 days)</option>
+              </select>
+            </div>
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Get Forecast
+            </button>
+          </div>
+          {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
+          {result && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md">
+              <h3 className="text-lg font-medium">Forecast Result</h3>
+              <pre className="mt-2 whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    ReactDOM.render(<StockForm />, document.getElementById('root'));
+  </script>
+</body>
+</html>
